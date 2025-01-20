@@ -45,8 +45,9 @@ int main() {
                     insideToken = false;
                 }
                 if (!isspace(line[i])) {
-                    string punct(1, line[i]);
-                    extractToken(punct, row, col);
+                    // string punct(1, line[i]);
+                    // extractToken(punct, row, col);
+                    cout<<"Punct: "<<line[i]<<" at "<<row<<" "<<col<<endl;
                 }
                 col++;
             } else {
