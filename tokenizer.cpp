@@ -8,12 +8,15 @@ vector<pair<string,pair<int,int>>> keyword;
 vector<pair<string,pair<int,int>>> variables;
 vector<pair<string,pair<int,int>>> nums;
 vector<pair<string,pair<int,int>>> punct;
+vector<pair<string,pair<int,int>>> commts;
+
+regex var("^[a-zA-Z_][a-zA-Z0-9_]*$");
+regex num("^[+-]?\\d+(\\.\\d+)?([eE][+-]?\\d+)?$");
+regex key(R"(\b(int|char|void|if|else|for|float|while|return|break|printf|continue|switch|case|default|struct|union|typedef|namespace|public|private|protected|class|new|delete|try|catch|throw|inline|virtual|static|const|volatile|friend|explicit|auto|long|short|signed|unsigned|true|false|nullptr)\b)");
+regex op(R"([+\-*/%=!&|<>^~])");
+regex commentex("^\\/\\/.*$");
 
 void extractToken(string s, int row, int col) {
-    regex var("^[a-zA-Z_][a-zA-Z0-9_]*$");
-    regex num("^[+-]?\\d+(\\.\\d+)?([eE][+-]?\\d+)?$");
-    regex key(R"(\b(int|char|void|if|else|for|float|while|return|break|printf|continue|switch|case|default|struct|union|typedef|namespace|public|private|protected|class|new|delete|try|catch|throw|inline|virtual|static|const|volatile|friend|explicit|auto|long|short|signed|unsigned|true|false|nullptr)\b)");
-    regex op(R"([+\-*/%=!&|<>^~])");
 
     if (regex_match(s, op)) {
         operators.push_back(make_pair(s, make_pair(row, col)));
@@ -23,7 +26,10 @@ void extractToken(string s, int row, int col) {
         variables.push_back(make_pair(s, make_pair(row, col)));
     } else if (regex_match(s, num)) {
         nums.push_back(make_pair(s, make_pair(row, col)));
-    } else {
+    } 
+    else if(regex_match(s, commentex)){
+        commts.push_back(make_pair(s, make_pair(row, col)));
+    }else {
         cout << "Invalid Token: " << s << " at (" << row << "," << col << ")" << endl;
     }
 }
@@ -33,13 +39,23 @@ int main() {
     string line;
     int row = 0;
     const int tabWidth = 4;
-
     while (getline(file, line)) {
         string s;
         int col = 0;
         bool insideToken = false;
-
+        
+        if(regex_match(line,commentex)){
+            commts.push_back(make_pair(s, make_pair(row, col)));
+            row++;
+            continue;
+        }
         for (int i = 0; i < line.length(); i++) {
+            if (line[i] == '/' && i + 1 < line.length() && line[i + 1] == '/') {
+                string comment = line.substr(i);
+                commts.push_back(make_pair(comment, make_pair(row, col)));
+                break; 
+            }
+
             if (line[i] == '\t') {
                 col += (tabWidth - (col % tabWidth));
             } else if (isspace(line[i]) || line[i] == '{' || line[i] == '}' || line[i] == '(' || 
@@ -111,6 +127,15 @@ int main() {
     if(punct.size() > 0){
         cout<<"------------------Punctuations-------------"<<endl;
         for(auto p : punct){
+            string str = p.first;
+            int row = p.second.first;
+            int col = p.second.second;
+            cout <<  str << " at Row: " << row << "  Col: " << col << endl;
+        }
+    }
+    if(punct.size() > 0){
+        cout<<"------------------Comments-------------"<<endl;
+        for(auto p : commts){
             string str = p.first;
             int row = p.second.first;
             int col = p.second.second;
